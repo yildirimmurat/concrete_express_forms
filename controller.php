@@ -9,16 +9,17 @@ use Concrete\Core\Support\Facade\Config;
 use Concrete\Core\Support\Facade\Database;
 use Concrete\Core\Package\PackageService;
 use Concrete\Core\Support\Facade\Express;
+use Helpers\Express as ExpressHelper;
 
 class Controller extends Package
 {
     protected $pkgHandle = 'concrete_express_forms';
     protected $appVersionRequired = '^8.2';
-    protected $pkgVersion = '0.1.1';
+    protected $pkgVersion = '0.1.2';
     protected $pkg;
     protected $db;
     protected $pkgAutoloaderRegistries = array(
-        // 'src/Helpers' => 'Helpers',
+        'src/Helpers' => 'Helpers',
     );
     public function getPackageDescription()
     {
@@ -42,11 +43,8 @@ class Controller extends Package
     {
         $this->pkg = parent::install();
         $this->db = Database::connection();
-
-        $recipe_object = $this->createExpressObject('recipe', 'recipes', 'Recipe', $this->pkg);
-        $recipe_object->addAttribute('text', 'Name', 'recipe_name');
-        $recipe_object->addAttribute('number', 'Calorie', 'recipe_calorie');
-        $recipe_object = $recipe_object->save();
+    
+        $this->createExpressObjects();
     }
 
     public function upgrade()
@@ -54,16 +52,42 @@ class Controller extends Package
         $result = parent::upgrade();
         $this->pkg = $this->app->make(PackageService::class)->getByHandle($this->pkgHandle);
         $this->db = Database::connection();
-
-        $recipe_object = $this->createExpressObject('recipe', 'recipes', 'Recipe', $this->pkg);
-        $recipe_object->addAttribute('text', 'Name', 'recipe_name');
-        $recipe_object->addAttribute('number', 'Calorie', 'recipe_calorie');
-        $recipe_object = $recipe_object->save();
+        
+        $this->createExpressObjects();
 
         return $result;
     }
 
-    protected function createExpressObject($handler, $plural_handler, $name, $pkg) {
-        return Express::buildObject($handler, $plural_handler, $name, $pkg);
+    protected function createExpressObjects() {
+        $objectsDetails = ExpressHelper::getOneToManyDetails();
+        $this->createOneToManyRelatedObjects($objectsDetails);
+    }
+
+    protected function createOneToManyRelatedObjects(array $objectsDetails) {
+        $inversed_object = $this->createExpressObjectBuilder($objectsDetails['inversed']);
+        $target_object = $this->createExpressObjectBuilder($objectsDetails['target']);
+
+        $builder = $inversed_object->buildAssociation();
+        $builder->addOneToMany($target_object);
+        $target_object = $builder->save();
+        $inversed_object = $inversed_object->getEntity();
+    }
+
+    protected function createExpressObjectBuilder(array $details) {
+        $object = Express::buildObject(
+            $details['build']['handler'],
+            $details['build']['plural_handler'],
+            $details['build']['name'],
+            $this->pkg
+        );
+        foreach ($details['attributes'] as $attribute) {
+            $object->addAttribute(
+                $attribute['type'],
+                $attribute['name'],
+                $attribute['handler']
+            );
+        }
+
+        return $object;
     }
 }

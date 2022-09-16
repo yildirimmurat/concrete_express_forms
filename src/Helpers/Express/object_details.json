@@ -1,0 +1,40 @@
+{
+    "inversed": {
+        "build": {
+            "handler": "recipe",
+            "plural_handler": "recipes",
+            "name": "Recipe"
+        },
+        "attributes": {
+            "0" : {
+                "type": "text",
+                "name": "Name",
+                "handler": "recipe_name"
+            },
+            "1": {
+                "type": "number",
+                "name": "Calorie",
+                "handler": "recipe_calorie"
+            }
+        }
+    },
+    "target": {
+        "build": {
+            "handler": "ingredient",
+            "plural_handler": "ingredients",
+            "name": "Ingredient"
+        },
+        "attributes": {
+            "0": {
+                "type": "text",
+                "name": "Name",
+                "handler": "ingredient_name"
+            },
+            "1": {
+                "type": "text",
+                "name": "Amount",
+                "handler": "ingredient_amount"
+            }
+        }
+    }
+}
