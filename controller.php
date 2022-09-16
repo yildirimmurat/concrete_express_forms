@@ -8,6 +8,7 @@ use Concrete\Core\Package\Package;
 use Concrete\Core\Support\Facade\Config;
 use Concrete\Core\Support\Facade\Database;
 use Concrete\Core\Package\PackageService;
+use Concrete\Core\Entity\Express\Association;
 use Concrete\Core\Support\Facade\Express;
 use Helpers\Express as ExpressHelper;
 
@@ -53,7 +54,6 @@ class Controller extends Package
         $this->pkg = $this->app->make(PackageService::class)->getByHandle($this->pkgHandle);
         $this->db = Database::connection();
         
-        $this->createExpressObjects();
 
         return $result;
     }
@@ -70,6 +70,24 @@ class Controller extends Package
         $inversed_object->buildAssociation()->addOneToMany($target_object)->save();
         $this->buildExpressForm($inversed_object, $objectsDetails['inversed']);
         $this->buildExpressForm($target_object, $objectsDetails['target']);
+
+        $this->addExpressEntries($objectsDetails['inversed']);
+        $this->addExpressEntries($objectsDetails['target']);            
+    }
+
+    protected function addExpressEntries($details) {
+        $entryBuilder = Express::buildEntry($details['build']['handler']);
+        foreach ($details['entryDetails'] as $entryDetail) {
+            foreach ($entryDetail as $at_handler => $at_value) {
+                $association = $entryBuilder->getEntity()->getAssociation($at_handler);
+                if ($association instanceof Association) {
+                    $entryBuilder->associations[] = [$at_handler, $at_value];
+                } else {
+                    $entryBuilder->setAttribute($at_handler, $at_value);
+                }
+            }
+            $entryBuilder->save();
+        }
     }
 
     protected function buildExpressForm($object, $details) {
