@@ -19,12 +19,22 @@
         },
         "entryDetails": {
             "0": {
-                "recipe_name": "butter with bread",
-                "recipe_calorie": 955
+                "attributes": {
+                    "recipe_name": "butter with bread",
+                    "recipe_calorie": 955
+                },
+                "associations": {
+
+                }
             },
             "1": {
-                "recipe_name": "soup",
-                "recipe_calorie": 408
+                "attributes": {
+                    "recipe_name": "soup",
+                    "recipe_calorie": 408
+                },
+                "associations": {
+
+                }
             }
         }
     },
@@ -48,12 +58,22 @@
         },
         "entryDetails": {
             "0": {
-                "ingredient_name": "oil",
-                "ingredient_amount": "two spoons"
+                "attributes": {
+                    "ingredient_name": "oil",
+                    "ingredient_amount": "two spoons"
+                },
+                "associations": {
+                    
+                }
             },
             "1": {
-                "ingredient_name": "salt",
-                "ingredient_amount": "1 dl"
+                "attributes": {
+                    "ingredient_name": "salt",
+                    "ingredient_amount": "1 dl"
+                },
+                "associations": {
+                    
+                }
             }
         }
     }

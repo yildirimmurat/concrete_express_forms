@@ -78,12 +78,14 @@ class Controller extends Package
     protected function addExpressEntries($details) {
         $entryBuilder = Express::buildEntry($details['build']['handler']);
         foreach ($details['entryDetails'] as $entryDetail) {
-            foreach ($entryDetail as $at_handler => $at_value) {
-                $association = $entryBuilder->getEntity()->getAssociation($at_handler);
-                if ($association instanceof Association) {
-                    $entryBuilder->associations[] = [$at_handler, $at_value];
-                } else {
-                    $entryBuilder->setAttribute($at_handler, $at_value);
+            foreach ($entryDetail as $attributes) {
+                foreach ($attributes as $at_handler => $at_value) {
+                    $association = $entryBuilder->getEntity()->getAssociation($at_handler);
+                    if ($association instanceof Association) {
+                        $entryBuilder->associations[] = [$at_handler, $at_value];
+                    } else {
+                        $entryBuilder->setAttribute($at_handler, $at_value);
+                    }
                 }
             }
             $entryBuilder->save();
