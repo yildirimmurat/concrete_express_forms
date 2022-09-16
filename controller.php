@@ -67,10 +67,18 @@ class Controller extends Package
         $inversed_object = $this->createExpressObjectBuilder($objectsDetails['inversed']);
         $target_object = $this->createExpressObjectBuilder($objectsDetails['target']);
 
-        $builder = $inversed_object->buildAssociation();
-        $builder->addOneToMany($target_object);
-        $target_object = $builder->save();
-        $inversed_object = $inversed_object->getEntity();
+        $inversed_object->buildAssociation()->addOneToMany($target_object)->save();
+        $this->buildExpressForm($inversed_object, $objectsDetails['inversed']);
+        $this->buildExpressForm($target_object, $objectsDetails['target']);
+    }
+
+    protected function buildExpressForm($object, $details) {
+        $form_builder_object = $object->buildForm('Form');
+        $form_object = $form_builder_object->addFieldSet('Basics');
+        foreach($details['attributes'] as $attribute) {
+            $form_object->addAttributeKeyControl($attribute['handler']);
+        }
+        $form_builder_object->save();
     }
 
     protected function createExpressObjectBuilder(array $details) {
