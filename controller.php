@@ -8,12 +8,13 @@ use Concrete\Core\Package\Package;
 use Concrete\Core\Support\Facade\Config;
 use Concrete\Core\Support\Facade\Database;
 use Concrete\Core\Package\PackageService;
+use Concrete\Core\Support\Facade\Express;
 
 class Controller extends Package
 {
     protected $pkgHandle = 'concrete_express_forms';
     protected $appVersionRequired = '^8.2';
-    protected $pkgVersion = '0.1.0';
+    protected $pkgVersion = '0.1.1';
     protected $pkg;
     protected $db;
     protected $pkgAutoloaderRegistries = array(
@@ -41,6 +42,11 @@ class Controller extends Package
     {
         $this->pkg = parent::install();
         $this->db = Database::connection();
+
+        $recipe_object = $this->createExpressObject('recipe', 'recipes', 'Recipe', $this->pkg);
+        $recipe_object->addAttribute('text', 'Name', 'recipe_name');
+        $recipe_object->addAttribute('number', 'Calorie', 'recipe_calorie');
+        $recipe_object = $recipe_object->save();
     }
 
     public function upgrade()
@@ -49,6 +55,15 @@ class Controller extends Package
         $this->pkg = $this->app->make(PackageService::class)->getByHandle($this->pkgHandle);
         $this->db = Database::connection();
 
+        $recipe_object = $this->createExpressObject('recipe', 'recipes', 'Recipe', $this->pkg);
+        $recipe_object->addAttribute('text', 'Name', 'recipe_name');
+        $recipe_object->addAttribute('number', 'Calorie', 'recipe_calorie');
+        $recipe_object = $recipe_object->save();
+
         return $result;
+    }
+
+    protected function createExpressObject($handler, $plural_handler, $name, $pkg) {
+        return Express::buildObject($handler, $plural_handler, $name, $pkg);
     }
 }
