@@ -16,8 +16,22 @@
             "handler": "recipe_calorie"
         }
     },
+    "forms": {
+        "0": {
+            "name": "Form",
+            "field_sets": {
+                "0": {
+                    "name": "Basics",
+                    "controls": {
+                        "0": "recipe_name",
+                        "1": "recipe_calorie"
+                    }
+                }
+            }
+        }
+    },
     "associations": {
-        "0": {            
+        "ingredients": {            
             "type": "OneToMany",
             "build": {
                 "handler": "ingredient",
@@ -35,6 +49,20 @@
                     "name": "Amount",
                     "handler": "ingredient_amount"
                 }
+            },
+            "forms": {
+                "0": {
+                    "name": "Form",
+                    "field_sets": {
+                        "0": {
+                            "name": "Basics",
+                            "controls": {
+                                "0": "ingredient_name",
+                                "1": "ingredient_amount"
+                            }
+                        }
+                    }
+                }
             }
         }
     },
@@ -45,7 +73,7 @@
                 "recipe_calorie": 955
             },
             "association": {
-                "target": "0",
+                "target": "ingredients",
                 "entryDetails": {
                     "0": {
                         "attributes": {
@@ -62,7 +90,7 @@
                 "recipe_calorie": 408
             },
             "association": {
-                "target": "0",
+                "target": "ingredients",
                 "entryDetails": {
                     "0": {
                         "attributes": {

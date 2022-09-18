@@ -18,7 +18,7 @@ class Controller extends Package
 {
     protected $pkgHandle = 'concrete_express_forms';
     protected $appVersionRequired = '^8.2';
-    protected $pkgVersion = '0.1.2';
+    protected $pkgVersion = '0.1.0';
     protected $pkg;
     protected $db;
     protected $pkgAutoloaderRegistries = array(
@@ -61,8 +61,6 @@ class Controller extends Package
     }
 
     protected function createExpressObjects() {
-        // $objectsDetails = ExpressHelper::getOneToManyDetails();
-        // $this->createOneToManyRelatedObjects($objectsDetails);
         $details = ExpressHelper::getDetails();
         $this->createExpressObjectsWithJson($details);
     }
@@ -72,20 +70,8 @@ class Controller extends Package
         
         $this->addExpressEntries($details);
 
-        $form_builder_object = $this->recipe->buildForm('Form');
-        $form_object = $form_builder_object->addFieldSet('Basics');
-        foreach(['recipe_name', 'recipe_calorie'] as $attribute) {
-            $form_object->addAttributeKeyControl($attribute);
-        }
-        $form_builder_object->save();
-
-        $form_builder_object = $this->ingredient->buildForm('Form');
-        $form_object = $form_builder_object->addFieldSet('Basics');
-        foreach(['ingredient_name', 'ingredient_amount'] as $attribute) {
-            $form_object->addAttributeKeyControl($attribute);
-        }
-        $form_object->addAssociationControl('recipe');
-        $form_builder_object->save();        
+        $this->buildExpressForm($this->main_object, $details);
+        $this->buildMultipleExpressForms($this->associated_objects, $details);        
     }
 
     protected function addExpressEntries($details) {
@@ -124,24 +110,32 @@ class Controller extends Package
     }
 
     protected function buildExpressForm($object, $details) {
-        $form_builder_object = $object->buildForm('Form');
-        $form_object = $form_builder_object->addFieldSet('Basics');
-        foreach($details['attributes'] as $attribute) {
-            $form_object->addAttributeKeyControl($attribute['handler']);
+        foreach($details['forms'] as $formDetail) {
+            $form_builder_object = $object->buildForm($formDetail['name']);
+            foreach($formDetail['field_sets'] as $field_set) {
+                $form_object = $form_builder_object->addFieldSet($field_set['name']);
+                foreach ($field_set['controls'] as $control) {
+                    $form_object->addAttributeKeyControl($control);
+                }
+            }
+            $form_builder_object->save();
         }
-        $form_builder_object->save();
     }
 
-    protected function createOneToManyRelatedObjects(array $objectsDetails) {
-        $inversed_object = $this->createExpressObjectBuilder($objectsDetails['inversed']);
-        $target_object = $this->createExpressObjectBuilder($objectsDetails['target']);
-
-        $inversed_object->buildAssociation()->addOneToMany($target_object)->save();
-        $this->buildExpressForm($inversed_object, $objectsDetails['inversed']);
-        $this->buildExpressForm($target_object, $objectsDetails['target']);
-
-        $this->addExpressEntries($objectsDetails['inversed']);
-        $this->addExpressEntries($objectsDetails['target']);            
+    protected function buildMultipleExpressForms($objects, $details) {
+        foreach ($objects as $object) {
+            foreach($details['associations']['ingredients']['forms'] as $formDetail) { // todo:
+                $form_builder_object = $object->buildForm($formDetail['name']);
+                foreach($formDetail['field_sets'] as $field_set) {
+                    $form_object = $form_builder_object->addFieldSet($field_set['name']);
+                    foreach ($field_set['controls'] as $control) {
+                        $form_object->addAttributeKeyControl($control);
+                    }
+                    $form_object->addAssociationControl($details['build']['handler']);
+                }
+                $form_builder_object->save();
+            }
+        }
     }
 
     protected function createExpressObjectBuilder(array $details) {
@@ -153,9 +147,11 @@ class Controller extends Package
 
         $main_object->buildAssociation()->addOneToMany($object)->save();
 
-        // todo: del
-        $this->recipe = $main_object;
-        $this->ingredient = $object;
+        $this->main_object = $main_object;
+        if (!isset($this->associated_objects)) {
+            $this->associated_objects = [];
+        }
+        $this->associated_objects[] = $object;
     }
 
     protected function createObjectBuilder(array $details) {
