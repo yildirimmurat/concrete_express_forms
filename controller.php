@@ -9,8 +9,10 @@ use Concrete\Core\Support\Facade\Config;
 use Concrete\Core\Support\Facade\Database;
 use Concrete\Core\Package\PackageService;
 use Concrete\Core\Entity\Express\Association;
+use Concrete\Core\Entity\Express\OneToManyAssociation;
 use Concrete\Core\Support\Facade\Express;
 use Helpers\Express as ExpressHelper;
+use Concrete\Core\Support\Facade\Application as App;
 
 class Controller extends Package
 {
@@ -59,8 +61,75 @@ class Controller extends Package
     }
 
     protected function createExpressObjects() {
-        $objectsDetails = ExpressHelper::getOneToManyDetails();
-        $this->createOneToManyRelatedObjects($objectsDetails);
+        // $objectsDetails = ExpressHelper::getOneToManyDetails();
+        // $this->createOneToManyRelatedObjects($objectsDetails);
+        $details = ExpressHelper::getDetails();
+        $this->createExpressObjectsWithJson($details);
+    }
+
+    protected function createExpressObjectsWithJson($details) {
+        $this->createExpressObjectBuilder($details);  
+        
+        $this->addExpressEntries($details);
+
+        $form_builder_object = $this->recipe->buildForm('Form');
+        $form_object = $form_builder_object->addFieldSet('Basics');
+        foreach(['recipe_name', 'recipe_calorie'] as $attribute) {
+            $form_object->addAttributeKeyControl($attribute);
+        }
+        $form_builder_object->save();
+
+        $form_builder_object = $this->ingredient->buildForm('Form');
+        $form_object = $form_builder_object->addFieldSet('Basics');
+        foreach(['ingredient_name', 'ingredient_amount'] as $attribute) {
+            $form_object->addAttributeKeyControl($attribute);
+        }
+        $form_object->addAssociationControl('recipe');
+        $form_builder_object->save();        
+    }
+
+    protected function addExpressEntries($details) {
+        $entryBuilder = Express::buildEntry($details['build']['handler']);
+        $targetEntries = [];
+        foreach ($details['entryDetails'] as $entryDetail) {
+            $associationDetail = $entryDetail['association'];
+            if ($associationDetail) {
+                $target_id = $associationDetail['target'];
+                if (isset($details['associations'][$target_id])) {
+                    $associationType = $details['associations'][$target_id]['type'];
+                    if ($associationType === 'OneToMany') {
+                        $target_entity_handler = $details['associations'][$target_id]['build']['handler'];
+                        $target_entity_plural_handler = $details['associations'][$target_id]['build']['plural_handler'];
+                        $entryDetails = $associationDetail['entryDetails'];
+                        foreach ($entryDetails as $detail) {
+                            $targetEntryBuilder = Express::buildEntry($target_entity_handler);
+                            foreach ($detail['attributes'] as $attribute_key => $attribute_value) {
+                                $fnc = 'set' . ucfirst(camelcase($attribute_key));
+                                $targetEntryBuilder->$fnc($attribute_value);
+                            }
+                            $targetEntry = $targetEntryBuilder->save();
+                            $targetEntries[] = $targetEntry;
+                        }
+                    }
+                }
+            }
+            foreach($entryDetail['attributes'] as $attribute_key => $attribute_value) {
+                $fnc = 'set' . ucfirst(camelcase($attribute_key));
+                $entryBuilder->$fnc($attribute_value);
+            }
+            $entry = $entryBuilder->save();
+            $fnc = 'set' . ucfirst(camelcase($target_entity_plural_handler)); // todo
+            $entry->associateEntries()->$fnc($targetEntries);
+        }
+    }
+
+    protected function buildExpressForm($object, $details) {
+        $form_builder_object = $object->buildForm('Form');
+        $form_object = $form_builder_object->addFieldSet('Basics');
+        foreach($details['attributes'] as $attribute) {
+            $form_object->addAttributeKeyControl($attribute['handler']);
+        }
+        $form_builder_object->save();
     }
 
     protected function createOneToManyRelatedObjects(array $objectsDetails) {
@@ -75,47 +144,35 @@ class Controller extends Package
         $this->addExpressEntries($objectsDetails['target']);            
     }
 
-    protected function addExpressEntries($details) {
-        $entryBuilder = Express::buildEntry($details['build']['handler']);
-        foreach ($details['entryDetails'] as $entryDetail) {
-            foreach ($entryDetail as $attributes) {
-                foreach ($attributes as $at_handler => $at_value) {
-                    $association = $entryBuilder->getEntity()->getAssociation($at_handler);
-                    if ($association instanceof Association) {
-                        $entryBuilder->associations[] = [$at_handler, $at_value];
-                    } else {
-                        $entryBuilder->setAttribute($at_handler, $at_value);
-                    }
-                }
-            }
-            $entryBuilder->save();
-        }
-    }
-
-    protected function buildExpressForm($object, $details) {
-        $form_builder_object = $object->buildForm('Form');
-        $form_object = $form_builder_object->addFieldSet('Basics');
-        foreach($details['attributes'] as $attribute) {
-            $form_object->addAttributeKeyControl($attribute['handler']);
-        }
-        $form_builder_object->save();
-    }
-
     protected function createExpressObjectBuilder(array $details) {
-        $object = Express::buildObject(
+        $main_object = $this->createObjectBuilder($details);
+
+        foreach($details['associations'] as $associationDetail) {
+            $object = $this->createObjectBuilder($associationDetail);
+        }
+
+        $main_object->buildAssociation()->addOneToMany($object)->save();
+
+        // todo: del
+        $this->recipe = $main_object;
+        $this->ingredient = $object;
+    }
+
+    protected function createObjectBuilder(array $details) {
+        $obj = Express::buildObject(
             $details['build']['handler'],
             $details['build']['plural_handler'],
             $details['build']['name'],
             $this->pkg
         );
         foreach ($details['attributes'] as $attribute) {
-            $object->addAttribute(
+            $obj->addAttribute(
                 $attribute['type'],
                 $attribute['name'],
                 $attribute['handler']
             );
         }
-
-        return $object;
+        
+        return $obj;
     }
 }

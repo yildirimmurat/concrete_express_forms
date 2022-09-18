@@ -5,9 +5,9 @@ namespace Helpers;
 class Express
 {
     const DIRECTORY_SEPERATOR = '/';
-    const DETAILS_FILE = 'object_details.json';
+    const DETAILS_FILE = 'express_objects_details.json';
 
-    public static function getOneToManyDetails()
+    public static function getDetails()
     {
         $filePath = dirname(__FILE__) . self::DIRECTORY_SEPERATOR . self::DETAILS_FILE;
 

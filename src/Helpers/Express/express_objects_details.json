@@ -1,0 +1,77 @@
+{
+    "build": {
+        "handler": "recipe",
+        "plural_handler": "recipes",
+        "name": "Recipe"
+    },
+    "attributes": {
+        "recipe_name" : {
+            "type": "text",
+            "name": "Name",
+            "handler": "recipe_name"
+        },
+        "recipe_calorie": {
+            "type": "number",
+            "name": "Calorie",
+            "handler": "recipe_calorie"
+        }
+    },
+    "associations": {
+        "0": {            
+            "type": "OneToMany",
+            "build": {
+                "handler": "ingredient",
+                "plural_handler": "ingredients",
+                "name": "Ingredient"
+            },
+            "attributes": {
+                "ingredient_name": {
+                    "type": "text",
+                    "name": "Name",
+                    "handler": "ingredient_name"
+                },
+                "ingredient_amount": {
+                    "type": "text",
+                    "name": "Amount",
+                    "handler": "ingredient_amount"
+                }
+            }
+        }
+    },
+    "entryDetails": {
+        "0": {
+            "attributes": {
+                "recipe_name": "butter with bread",
+                "recipe_calorie": 955
+            },
+            "association": {
+                "target": "0",
+                "entryDetails": {
+                    "0": {
+                        "attributes": {
+                            "ingredient_name": "oil",
+                            "ingredient_amount": "two spoons"
+                        }
+                    }
+                }
+            }
+        },
+        "1": {
+            "attributes": {
+                "recipe_name": "soup",
+                "recipe_calorie": 408
+            },
+            "association": {
+                "target": "0",
+                "entryDetails": {
+                    "0": {
+                        "attributes": {
+                            "ingredient_name": "salt",
+                            "ingredient_amount": "1 dl"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
