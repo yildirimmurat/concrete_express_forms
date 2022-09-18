@@ -143,15 +143,15 @@ class Controller extends Package
 
         foreach($details['associations'] as $associationDetail) {
             $object = $this->createObjectBuilder($associationDetail);
+            if (!isset($this->associated_objects)) {
+                $this->associated_objects = [];
+            }
+            $this->associated_objects[] = $object;
         }
 
         $main_object->buildAssociation()->addOneToMany($object)->save();
 
         $this->main_object = $main_object;
-        if (!isset($this->associated_objects)) {
-            $this->associated_objects = [];
-        }
-        $this->associated_objects[] = $object;
     }
 
     protected function createObjectBuilder(array $details) {
