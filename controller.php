@@ -8,11 +8,8 @@ use Concrete\Core\Package\Package;
 use Concrete\Core\Support\Facade\Config;
 use Concrete\Core\Support\Facade\Database;
 use Concrete\Core\Package\PackageService;
-use Concrete\Core\Entity\Express\Association;
-use Concrete\Core\Entity\Express\OneToManyAssociation;
 use Concrete\Core\Support\Facade\Express;
 use Helpers\Express as ExpressHelper;
-use Concrete\Core\Support\Facade\Application as App;
 
 class Controller extends Package
 {
@@ -23,6 +20,7 @@ class Controller extends Package
     protected $db;
     protected $pkgAutoloaderRegistries = array(
         'src/Helpers' => 'Helpers',
+        'src/ConcreteExpressForms' => 'ConcreteExpressForms',
     );
     public function getPackageDescription()
     {
@@ -40,6 +38,8 @@ class Controller extends Package
         Config::set('concrete.external.news_overlay', false);
         Config::set('concrete.accessibility.display_help_system', false);
 
+        $this->app->make('Concrete\Core\Express\Controller\Manager')
+            ->setStandardController('ConcreteExpressForms\Express\Controller\FormController');
     }
 
     public function install()
@@ -66,10 +66,8 @@ class Controller extends Package
     }
 
     protected function createExpressObjectsWithJson($details) {
-        $this->createExpressObjectBuilder($details);  
-        
+        $this->createExpressObjectBuilder($details);          
         $this->addExpressEntries($details);
-
         $this->buildExpressForm($this->main_object, $details);
         $this->buildMultipleExpressForms($this->associated_objects, $details);        
     }
